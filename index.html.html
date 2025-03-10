@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Máquina de Gachapon 3D</title>
+    <style>
+        :root {
+            --primary-color: #ff4a4a;
+            --secondary-color: #4a90ff;
+            --machine-color: #f5c542;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial', sans-serif;
+            background: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            perspective: 1000px;
+            overflow-x: hidden;
+        }
+
+        .container {
+            position: relative;
+            width: 300px;
+            height: 500px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transform-style: preserve-3d;
+        }
+
+        .title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+        }
+
+        .instructions {
+            font-size: 14px;
+            color: #555;
+            text-align: center;
+            margin-bottom: 20px;
+            background: rgba(255,255,255,0.8);
+            padding: 10px;
+            border-radius: 5px;
+            max-width: 280px;
+        }
+
+        .gachapon-machine {
+            position: relative;
+            width: 200px;
+            height: 300px;
+            background: var(--machine-color);
+            border-radius: 20px 20px 100px 100px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transform-style: preserve-3d;
+            transition: transform 0.3s ease;
+        }
+
+        .machine-top {
+            position: relative;
+            width: 100%;
+            height: 80px;
+            background: linear-gradient(to bottom, #ffdd57, var(--machine-color));
+            border-radius: 20px 20px 0 0;
+            box-shadow: 0 5px 5px rgba(0,0,0,0.1) inset;
+        }
+
+        .dome {
+            position: absolute;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 60px 60px 0 0;
+            box-shadow: 0 -5px 15px rgba(0,0,0,0.1);
+        }
+
+        .dome::after {
+            content: '';
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 50px 50px 0 0;
+        }
+
+        .machine-body {
+            position: relative;
+            width: 100%;
+            height: 200px;
+            background: var(--machine-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .capsule-slot {
+            position: absolute;
+            bottom: -10px;
+            width: 70px;
+            height: 70px;
+            background: #333;
+            border-radius: 35px;
+            box-shadow: 0 -5px 10px rgba(0,0,0,0.2) inset;
+        }
+
+        .button-container {
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+        }
+
+        .gachapon-button {
+            width: 70px;
+            height: 70px;
+            background: var(--primary-color);
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            color: white;
+            font-weight: bold;
+            font-size: 16px;
+            transform: translateZ(10px);
+            transition: transform 0.2s, box-shadow 0.2s;
+            outline: none;
+        }
+
+        .gachapon-button:hover {
+            transform: translateZ(15px) scale(1.05);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        }
+
+        .gachapon-button:active {
+            transform: translateZ(5px) scale(0.95);
+            box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+        }
+
+        .gachapon-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: translateZ(5px);
+            box-shadow: 0 3px 5px rgba(0,0,0,0.1);
+        }
+
+        .capsule {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #ff9900, #ff5e62);
+            border-radius: 25px;
+            display: none;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            transform-style: preserve-3d;
+            z-index: 10;
+        }
+
+        .capsule::before, .capsule::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 50%;
+            border-radius: 25px 25px 0 0;
+        }
+
+        .capsule::before {
+            top: 0;
+            background: linear-gradient(135deg, #ff9900, #ff5e62);
+            border-bottom: 2px solid rgba(0,0,0,0.1);
+        }
+
+        .capsule::after {
+            bottom: 0;
+            background: linear-gradient(135deg, #ff5e62, #ff9900);
+            border-top: 2px solid rgba(0,0,0,0.1);
+        }
+
+        @keyframes comeOut {
+            0% {
+                bottom: 0;
+                opacity: 0;
+                transform: translateZ(0) rotateX(0deg);
+            }
+            20% {
+                opacity: 1;
+            }
+            100% {
+                bottom: -150px;
+                opacity: 1;
+                transform: translateZ(50px) rotateX(720deg);
+            }
+        }
+
+        @keyframes shake {
+            0%, 100% {
+                transform: rotate(0deg);
+            }
+            25% {
+                transform: rotate(-5deg);
+            }
+            50% {
+                transform: rotate(0deg);
+            }
+            75% {
+                transform: rotate(5deg);
+            }
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 100;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.5s;
+            pointer-events: none;
+        }
+
+        .modal.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            max-width: 300px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            transform: scale(0.8);
+            transition: transform 0.3s;
+        }
+
+        .modal.show .modal-content {
+            transform: scale(1);
+        }
+
+        .modal-title {
+            font-size: 20px;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+
+        .prize-link {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 8px 16px;
+            background: var(--secondary-color);
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+
+        .prize-link:hover {
+            background: #3570c6;
+        }
+
+        .close-button {
+            margin-top: 15px;
+            padding: 8px 16px;
+            background: #eee;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+
+        .close-button:hover {
+            background: #ddd;
+        }
+
+        .prize-image {
+            max-width: 100%;
+            height: auto;
+            margin-top: 15px;
+            border-radius: 5px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+            display: none;
+        }
+
+        .tries-counter {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255,255,255,0.8);
+            padding: 5px 10px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        /* Colores aleatorios para las cápsulas */
+        .capsule-red {
+            background: linear-gradient(135deg, #ff5e62, #ff9966);
+        }
+        .capsule-blue {
+            background: linear-gradient(135deg, #4a90ff, #6fc8ff);
+        }
+        .capsule-green {
+            background: linear-gradient(135deg, #43c47a, #9be669);
+        }
+        .capsule-purple {
+            background: linear-gradient(135deg, #9561e2, #b39ddb);
+        }
+        .capsule-yellow {
+            background: linear-gradient(135deg, #ffcd3c, #ffee58);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">Máquina de Gachapon</h1>
+        <div class="instructions">
+            Presiona el botón rojo para obtener un premio al azar. ¡Solo tienes 3 oportunidades!
+        </div>
+
+        <div class="gachapon-machine">
+            <div class="machine-top">
+                <div class="dome"></div>
+            </div>
+            <div class="machine-body">
+                <div class="capsule-slot"></div>
+                <div class="capsule"></div>
+            </div>
+            <div class="tries-counter">Intentos: <span id="tries">3</span>/3</div>
+        </div>
+
+        <div class="button-container">
+            <button class="gachapon-button" id="gachaponButton">GIRAR</button>
+        </div>
+    </div>
+
+    <div class="modal" id="prizeModal">
+        <div class="modal-content">
+            <h2 class="modal-title" id="modalTitle"></h2>
+            <p id="modalMessage"></p>
+            <a class="prize-link" id="prizeLink" style="display: none;">Ver Regalo</a>
+            <button class="close-button" id="closeModal">Cerrar</button>
+        </div>
+    </div>
+
+    <script>
+        // Referencias a elementos del DOM
+        const gachaponButton = document.getElementById('gachaponButton');
+        const gachaponMachine = document.querySelector('.gachapon-machine');
+        const capsule = document.querySelector('.capsule');
+        const modal = document.getElementById('prizeModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalMessage = document.getElementById('modalMessage');
+        const prizeLink = document.getElementById('prizeLink');
+        const closeModal = document.getElementById('closeModal');
+        const triesCounter = document.getElementById('tries');
+
+        // Lista de premios
+        const prizes = [
+            "https://postimg.cc/f3XJ2bbx",
+            "https://postimg.cc/5Q9y2qS3",
+            "https://postimg.cc/sQ41z07x",
+            "https://postimg.cc/LhmnD2F1",
+            "https://postimg.cc/dkYDzK7g",
+            null // Esta opción es para "no te llevas nada"
+        ];
+
+        // Colores para las cápsulas
+        const capsuleColors = [
+            "capsule-red",
+            "capsule-blue",
+            "capsule-green",
+            "capsule-purple",
+            "capsule-yellow"
+        ];
+
+        // Número de intentos restantes
+        let triesLeft = 3;
+        updateTriesCounter();
+
+        // Función para actualizar el contador de intentos
+        function updateTriesCounter() {
+            triesCounter.textContent = triesLeft;
+        }
+
+        // Función para animar la máquina y soltar una cápsula
+        function playCapsuleAnimation() {
+            // Desactivar el botón
+            gachaponButton.disabled = true;
+            
+            // Animar la máquina
+            gachaponMachine.style.animation = 'shake 0.5s ease';
+            
+            // Después de un tiempo, reset la animación de la máquina
+            setTimeout(() => {
+                gachaponMachine.style.animation = '';
+            }, 500);
+
+            // Aplicar un color aleatorio a la cápsula
+            capsule.className = 'capsule ' + capsuleColors[Math.floor(Math.random() * capsuleColors.length)];
+            
+            // Mostrar la cápsula
+            capsule.style.display = 'block';
+            
+            // Iniciar la animación de la cápsula
+            capsule.style.animation = 'comeOut 2s forwards';
+            
+            // Después de la animación, mostrar el premio
+            setTimeout(() => {
+                // Ocultar la cápsula
+                capsule.style.display = 'none';
+                capsule.style.animation = '';
+                
+                // Mostrar el premio
+                showPrize();
+                
+                // Reactivar el botón si quedan intentos
+                if (triesLeft > 0) {
+                    gachaponButton.disabled = false;
+                }
+            }, 2000);
+        }
+
+        // Función para mostrar el premio
+        function showPrize() {
+            // Seleccionar un premio aleatorio
+            const prizeIndex = Math.floor(Math.random() * prizes.length);
+            const prize = prizes[prizeIndex];
+            
+            if (prize === null) {
+                // No hay premio
+                modalTitle.textContent = "¡Oops!";
+                modalMessage.textContent = "Lo siento, no te llevas nada...";
+                prizeLink.style.display = "none";
+            } else {
+                // Hay premio
+                modalTitle.textContent = "¡Felicidades!";
+                modalMessage.textContent = "¡Toma tu regalo!";
+                prizeLink.href = prize;
+                prizeLink.style.display = "inline-block";
+                
+                // Configuración adicional para el enlace
+                prizeLink.onclick = function(event) {
+                    event.preventDefault();
+                    window.location.href = prize;
+                    return false;
+                };
+            }
+            
+            // Mostrar el modal
+            modal.classList.add('show');
+        }
+
+        // Evento para el botón de gachapon
+        gachaponButton.addEventListener('click', () => {
+            triesLeft--;
+            updateTriesCounter();
+            playCapsuleAnimation();
+            
+            // Si no quedan intentos, desactivar el botón permanentemente
+            if (triesLeft === 0) {
+                gachaponButton.disabled = true;
+            }
+        });
+
+        // Evento para cerrar el modal
+        closeModal.addEventListener('click', () => {
+            modal.classList.remove('show');
+        });
+    </script>
+</body>
+</html>
